@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 
 export default function GameRoom({ room, roomState, onAdvance, onClear, onExit, onBack }) {
   const step = room.steps[roomState.stepIdx];
@@ -61,22 +61,55 @@ function StoryPanel({ step, onDone }) {
 
 // ─── Quiz Panel ───
 function QuizPanel({ step, onSolve }) {
-  const [phase, setPhase] = useState('narration'); // narration → quiz → result
+  // phases: narration → thinking (30s) → quiz → result → prison (30s, on wrong) → quiz
+  const [phase, setPhase] = useState('narration');
   const [sel, setSel] = useState(null);
   const [showed, setShowed] = useState(false);
   const [hint, setHint] = useState(false);
   const [usedHint, setUsedHint] = useState(false);
+  const [timer, setTimer] = useState(30);
+  const timerRef = useRef(null);
 
   const p = step.problem;
   const correct = sel === p.a;
 
   useEffect(() => {
-    setPhase('narration'); setSel(null); setShowed(false); setHint(false); setUsedHint(false);
+    setPhase('narration'); setSel(null); setShowed(false);
+    setHint(false); setUsedHint(false); setTimer(30);
+    return () => clearInterval(timerRef.current);
   }, [step]);
 
+  const startTimer = (nextPhase) => {
+    setTimer(30);
+    clearInterval(timerRef.current);
+    timerRef.current = setInterval(() => {
+      setTimer(prev => {
+        if (prev <= 1) {
+          clearInterval(timerRef.current);
+          setPhase(nextPhase);
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+  };
+
+  const enterThinking = () => {
+    setPhase('thinking');
+    startTimer('quiz');
+  };
+
+  const enterPrison = () => {
+    setSel(null);
+    setShowed(false);
+    setPhase('prison');
+    startTimer('quiz');
+  };
+
+  // ─ Narration
   if (phase === 'narration') {
     return (
-      <div className="vn-text-box" onClick={() => setPhase('quiz')}>
+      <div className="vn-text-box" onClick={enterThinking}>
         <p className="vn-label">{step.title}</p>
         <p className="vn-text">{step.narration}</p>
         <span className="vn-tap">탭하여 도전</span>
@@ -84,6 +117,36 @@ function QuizPanel({ step, onSolve }) {
     );
   }
 
+  // ─ Thinking (30s cooldown, question visible, choices locked)
+  if (phase === 'thinking') {
+    return (
+      <div className="wait-box">
+        <div className="wait-timer">{timer}</div>
+        <p className="wait-label">문제를 읽고 생각하세요</p>
+        <div className="wait-question">{p.q}</div>
+        <div className="wait-choices">
+          {p.c.map((c, i) => (
+            <div key={i} className="quiz-c locked">{c}</div>
+          ))}
+        </div>
+      </div>
+    );
+  }
+
+  // ─ Prison (wrong answer penalty)
+  if (phase === 'prison') {
+    return (
+      <div className="prison-box">
+        <div className="prison-timer">{timer}</div>
+        <p className="prison-text">시야가 흐려진다...</p>
+        <p className="prison-text2">여기는... 어디일까...</p>
+        <div className="prison-question">{p.q}</div>
+        <p className="prison-wait">다시 도전할 수 있을 때까지 {timer}초</p>
+      </div>
+    );
+  }
+
+  // ─ Quiz (choices active)
   return (
     <div className="quiz-box">
       <p className="quiz-q">{p.q}</p>
@@ -106,7 +169,6 @@ function QuizPanel({ step, onSolve }) {
           <p className="qr-msg">{correct ? '정답!' : '틀렸습니다.'}</p>
           {correct && !usedHint && <p className="qr-star">+1점</p>}
           {correct && <p className="qr-exp">{p.e}</p>}
-          {!correct && <p className="qr-exp">다시 한번 생각해 보세요.</p>}
         </div>
       )}
 
@@ -123,7 +185,7 @@ function QuizPanel({ step, onSolve }) {
         ) : (
           <button className="vn-btn" onClick={() => {
             if (correct) onSolve(!usedHint);
-            else { setSel(null); setShowed(false); }
+            else enterPrison();
           }}>
             {correct ? '다음으로' : '다시 풀기'}
           </button>
