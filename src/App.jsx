@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { load, save, reset } from './utils/storage';
 import { ROOMS, INTRO_SCENES, ENDING_SCENES, ENDINGS } from './data/gameData';
+import AudioManager from './components/AudioManager';
 import IntroScreen from './components/IntroScreen';
 import RoomSelect from './components/RoomSelect';
 import GameRoom from './components/GameRoom';
@@ -25,6 +26,7 @@ export default function App() {
 
   return (
     <div className={`app ${fade ? 'fade' : ''}`}>
+      <AudioManager />
       {gs.screen === 'intro' && (
         <IntroScreen scenes={INTRO_SCENES} onDone={() => tr(() => setGs(s => ({ ...s, screen: 'rooms' })))} />
       )}

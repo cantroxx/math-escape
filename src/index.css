@@ -416,6 +416,25 @@ body {
   max-width: 360px;
 }
 
+/* ─── Audio Toggle ─── */
+.audio-toggle {
+  position: fixed;
+  bottom: max(12px, env(safe-area-inset-bottom));
+  right: 12px;
+  z-index: 999;
+  background: rgba(0,0,0,0.6);
+  backdrop-filter: blur(8px);
+  border: 1px solid rgba(255,255,255,0.1);
+  color: var(--t2);
+  font-family: inherit;
+  font-size: 11px;
+  padding: 6px 12px;
+  border-radius: 20px;
+  cursor: pointer;
+  transition: 0.2s;
+}
+.audio-toggle:hover { background: rgba(0,0,0,0.8); color: var(--t1); }
+
 /* ─── Responsive ─── */
 @media (max-width: 380px) {
   .vn-text { font-size: 14px; }

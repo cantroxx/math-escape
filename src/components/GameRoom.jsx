@@ -91,8 +91,8 @@ function QuizPanel({ step, onSolve }) {
         {p.c.map((c, i) => {
           let cls = 'quiz-c';
           if (sel === i) cls += ' sel';
-          if (showed && i === p.a) cls += ' ok';
-          if (showed && i === sel && !correct) cls += ' no';
+          if (showed && correct && i === p.a) cls += ' ok';
+          if (showed && !correct && i === sel) cls += ' no';
           return (
             <button key={i} className={cls} onClick={() => !showed && setSel(i)} disabled={showed}>
               {c}
@@ -103,9 +103,10 @@ function QuizPanel({ step, onSolve }) {
 
       {showed && (
         <div className={`quiz-result ${correct ? 'ok' : 'fail'}`}>
-          <p className="qr-msg">{correct ? '정답!' : '오답. 다시 도전하세요.'}</p>
+          <p className="qr-msg">{correct ? '정답!' : '틀렸습니다.'}</p>
           {correct && !usedHint && <p className="qr-star">+1점</p>}
-          <p className="qr-exp">{p.e}</p>
+          {correct && <p className="qr-exp">{p.e}</p>}
+          {!correct && <p className="qr-exp">다시 한번 생각해 보세요.</p>}
         </div>
       )}
 
