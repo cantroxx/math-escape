@@ -416,7 +416,53 @@ body {
   max-width: 360px;
 }
 
-/* ─── Thinking Phase (30s cooldown) ─── */
+/* ─── Short Answer Input ─── */
+.quiz-input-wrap {
+  width: 100%;
+}
+.quiz-input {
+  width: 100%;
+  padding: 14px 16px;
+  background: rgba(255,255,255,0.06);
+  border: 2px solid rgba(255,255,255,0.12);
+  border-radius: 10px;
+  color: var(--t1);
+  font-family: 'Noto Sans KR', sans-serif;
+  font-size: 18px;
+  font-weight: 600;
+  text-align: center;
+  outline: none;
+  transition: 0.2s;
+  caret-color: var(--accent);
+}
+.quiz-input::placeholder { color: rgba(255,255,255,0.2); font-weight: 400; font-size: 14px; }
+.quiz-input:focus { border-color: var(--accent); background: rgba(255,255,255,0.08); }
+.quiz-input.ok { border-color: var(--ok); background: rgba(92,184,122,0.1); }
+.quiz-input.no { border-color: var(--no); background: rgba(200,80,80,0.1); }
+.quiz-input:disabled { opacity: 0.7; }
+
+.input-preview {
+  text-align: center;
+  font-size: 13px;
+  color: var(--t2);
+  padding: 14px;
+  background: rgba(255,255,255,0.03);
+  border: 1px dashed rgba(255,255,255,0.1);
+  border-radius: 10px;
+  opacity: 0.5;
+}
+
+/* ─── Prison Choices ─── */
+.prison-choices {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 6px;
+  width: 100%;
+  max-width: 400px;
+  opacity: 0.25;
+}
+
+/* ─── Thinking Phase (15s cooldown) ─── */
 .wait-box {
   display: flex;
   flex-direction: column;

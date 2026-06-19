@@ -61,49 +61,44 @@ function StoryPanel({ step, onDone }) {
 
 // ─── Quiz Panel ───
 function QuizPanel({ step, onSolve }) {
-  // phases: narration → thinking (30s) → quiz → result → prison (30s, on wrong) → quiz
   const [phase, setPhase] = useState('narration');
-  const [sel, setSel] = useState(null);
+  const [sel, setSel] = useState(null);       // for multiple choice
+  const [inputVal, setInputVal] = useState(''); // for short answer
   const [showed, setShowed] = useState(false);
   const [hint, setHint] = useState(false);
   const [usedHint, setUsedHint] = useState(false);
-  const [timer, setTimer] = useState(30);
+  const [timer, setTimer] = useState(15);
   const timerRef = useRef(null);
 
   const p = step.problem;
-  const correct = sel === p.a;
+  const isMultiple = !!p.c; // has choices = multiple choice
+  const normalize = (s) => String(s).replace(/[\s,]/g, '');
+  const correct = isMultiple
+    ? sel === p.a
+    : normalize(inputVal) === normalize(p.answer);
+  const hasAnswer = isMultiple ? sel !== null : inputVal.trim().length > 0;
 
   useEffect(() => {
-    setPhase('narration'); setSel(null); setShowed(false);
-    setHint(false); setUsedHint(false); setTimer(30);
+    setPhase('narration'); setSel(null); setInputVal(''); setShowed(false);
+    setHint(false); setUsedHint(false); setTimer(15);
     return () => clearInterval(timerRef.current);
   }, [step]);
 
-  const startTimer = (nextPhase) => {
-    setTimer(30);
+  const startTimer = (nextPhase, duration) => {
+    setTimer(duration);
     clearInterval(timerRef.current);
     timerRef.current = setInterval(() => {
       setTimer(prev => {
-        if (prev <= 1) {
-          clearInterval(timerRef.current);
-          setPhase(nextPhase);
-          return 0;
-        }
+        if (prev <= 1) { clearInterval(timerRef.current); setPhase(nextPhase); return 0; }
         return prev - 1;
       });
     }, 1000);
   };
 
-  const enterThinking = () => {
-    setPhase('thinking');
-    startTimer('quiz');
-  };
-
+  const enterThinking = () => { setPhase('thinking'); startTimer('quiz', 15); };
   const enterPrison = () => {
-    setSel(null);
-    setShowed(false);
-    setPhase('prison');
-    startTimer('quiz');
+    setSel(null); setInputVal(''); setShowed(false);
+    setPhase('prison'); startTimer('quiz', 30);
   };
 
   // ─ Narration
@@ -117,23 +112,25 @@ function QuizPanel({ step, onSolve }) {
     );
   }
 
-  // ─ Thinking (30s cooldown, question visible, choices locked)
+  // ─ Thinking (15s cooldown)
   if (phase === 'thinking') {
     return (
       <div className="wait-box">
         <div className="wait-timer">{timer}</div>
         <p className="wait-label">문제를 읽고 생각하세요</p>
         <div className="wait-question">{p.q}</div>
-        <div className="wait-choices">
-          {p.c.map((c, i) => (
-            <div key={i} className="quiz-c locked">{c}</div>
-          ))}
-        </div>
+        {isMultiple ? (
+          <div className="wait-choices">
+            {p.c.map((c, i) => <div key={i} className="quiz-c locked">{c}</div>)}
+          </div>
+        ) : (
+          <div className="input-preview">직접 답을 입력하세요</div>
+        )}
       </div>
     );
   }
 
-  // ─ Prison (wrong answer penalty)
+  // ─ Prison (30s penalty)
   if (phase === 'prison') {
     return (
       <div className="prison-box">
@@ -141,28 +138,49 @@ function QuizPanel({ step, onSolve }) {
         <p className="prison-text">시야가 흐려진다...</p>
         <p className="prison-text2">여기는... 어디일까...</p>
         <div className="prison-question">{p.q}</div>
+        {isMultiple && (
+          <div className="prison-choices">
+            {p.c.map((c, i) => <div key={i} className="quiz-c locked">{c}</div>)}
+          </div>
+        )}
         <p className="prison-wait">다시 도전할 수 있을 때까지 {timer}초</p>
       </div>
     );
   }
 
-  // ─ Quiz (choices active)
+  // ─ Quiz (active)
   return (
     <div className="quiz-box">
       <p className="quiz-q">{p.q}</p>
-      <div className="quiz-choices">
-        {p.c.map((c, i) => {
-          let cls = 'quiz-c';
-          if (sel === i) cls += ' sel';
-          if (showed && correct && i === p.a) cls += ' ok';
-          if (showed && !correct && i === sel) cls += ' no';
-          return (
-            <button key={i} className={cls} onClick={() => !showed && setSel(i)} disabled={showed}>
-              {c}
-            </button>
-          );
-        })}
-      </div>
+
+      {isMultiple ? (
+        <div className="quiz-choices">
+          {p.c.map((c, i) => {
+            let cls = 'quiz-c';
+            if (sel === i) cls += ' sel';
+            if (showed && correct && i === p.a) cls += ' ok';
+            if (showed && !correct && i === sel) cls += ' no';
+            return (
+              <button key={i} className={cls} onClick={() => !showed && setSel(i)} disabled={showed}>
+                {c}
+              </button>
+            );
+          })}
+        </div>
+      ) : (
+        <div className="quiz-input-wrap">
+          <input
+            className={`quiz-input ${showed ? (correct ? 'ok' : 'no') : ''}`}
+            type="text"
+            inputMode="numeric"
+            placeholder="답을 입력하세요"
+            value={inputVal}
+            onChange={e => !showed && setInputVal(e.target.value)}
+            disabled={showed}
+            autoComplete="off"
+          />
+        </div>
+      )}
 
       {showed && (
         <div className={`quiz-result ${correct ? 'ok' : 'fail'}`}>
@@ -180,7 +198,7 @@ function QuizPanel({ step, onSolve }) {
         {!showed ? (
           <>
             {!hint && <button className="vn-btn ghost" onClick={() => { setHint(true); setUsedHint(true); }}>힌트</button>}
-            <button className="vn-btn" onClick={() => sel !== null && setShowed(true)} disabled={sel === null}>확인</button>
+            <button className="vn-btn" onClick={() => hasAnswer && setShowed(true)} disabled={!hasAnswer}>확인</button>
           </>
         ) : (
           <button className="vn-btn" onClick={() => {
