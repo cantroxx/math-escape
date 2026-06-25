@@ -1,6 +1,6 @@
 import { useState } from 'react';
 
-export default function EndingScreen({ scenes, ending, totalStars, rooms, gs, onReset }) {
+export default function EndingScreen({ scenes, ending, totalStars, rooms, roomsState, maxStars, onReset }) {
   const [phase, setPhase] = useState('scene'); // scene → result
   const [idx, setIdx] = useState(0);
 
@@ -32,13 +32,13 @@ export default function EndingScreen({ scenes, ending, totalStars, rooms, gs, on
         <h1 className="end-title">{ending.title}</h1>
         <p className="end-msg">{ending.msg}</p>
         <div className="end-stats">
-          <div className="end-total">총점: <b>{totalStars}</b> / 20</div>
+          <div className="end-total">총점: <b>{totalStars}</b> / {maxStars}</div>
           <div className="end-rooms">
             {rooms.map(r => (
               <div key={r.id} className="end-room">
                 <span className="er-floor">{r.id}층</span>
                 <span className="er-name">{r.name}</span>
-                <span className="er-score">{gs.rooms[r.id].stars}점</span>
+                <span className="er-score">{roomsState[r.id].stars}점</span>
               </div>
             ))}
           </div>

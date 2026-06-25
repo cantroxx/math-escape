@@ -1,19 +1,36 @@
-export default function RoomSelect({ rooms, gs, totalStars, onSelect, onReset }) {
+export default function RoomSelect({ rooms, unlocked, roomsState, difficulty, totalStars, onSelect, onChangeDifficulty, onReset }) {
+  const maxStars = difficulty === 'hard' ? 40 : 20;
+
   return (
-    <div className="vn-screen">
+    <div className={`vn-screen difficulty-${difficulty}`}>
       <div className="vn-bg" style={{ backgroundImage: 'url(/images/select.jpg)' }} />
       <div className="vn-gradient full" />
       <div className="select-content">
         <div className="select-header">
           <h1 className="select-title">수학 던전</h1>
           <p className="select-sub">시련을 통과하고 탈출하라</p>
+
+          <div className="difficulty-tabs">
+            <button
+              className={`diff-tab ${difficulty === 'normal' ? 'active' : ''}`}
+              onClick={() => onChangeDifficulty('normal')}
+            >
+              보통
+            </button>
+            <button
+              className={`diff-tab ${difficulty === 'hard' ? 'active' : ''}`}
+              onClick={() => onChangeDifficulty('hard')}
+            >
+              어려움
+            </button>
+          </div>
         </div>
 
         <div className="select-grid">
           {rooms.map(r => {
-            const open = gs.unlocked.includes(r.id);
-            const done = gs.rooms[r.id].cleared;
-            const stars = gs.rooms[r.id].stars;
+            const open = unlocked.includes(r.id);
+            const done = roomsState[r.id].cleared;
+            const stars = roomsState[r.id].stars;
             return (
               <button key={r.id}
                 className={`select-card ${open ? 'open' : 'locked'} ${done ? 'done' : ''}`}
@@ -36,7 +53,7 @@ export default function RoomSelect({ rooms, gs, totalStars, onSelect, onReset })
         </div>
 
         <div className="select-footer">
-          <span className="select-stars">총점: {totalStars} / 20</span>
+          <span className="select-stars">총점: {totalStars} / {maxStars}</span>
           <button className="select-reset" onClick={onReset}>처음부터</button>
         </div>
       </div>
