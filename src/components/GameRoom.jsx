@@ -198,7 +198,10 @@ function QuizPanel({ step, onSolve }) {
         {!showed ? (
           <>
             {!hint && <button className="vn-btn ghost" onClick={() => { setHint(true); setUsedHint(true); }}>힌트</button>}
-            <button className="vn-btn" onClick={() => hasAnswer && setShowed(true)} disabled={!hasAnswer}>확인</button>
+            <button className="vn-btn" onClick={() => {
+              if (correct) onSolve(!usedHint);
+              else setShowed(true);
+            }} disabled={!hasAnswer}>확인</button>
           </>
         ) : (
           <button className="vn-btn" onClick={() => {
